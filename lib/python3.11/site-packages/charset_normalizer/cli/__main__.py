@@ -32,7 +32,7 @@ def query_yes_no(question: str, default: str = "yes") -> bool:
     elif default == "no":
         prompt = " [y/N] "
     else:
-        raise ValueError("invalid default answer: '%s'" % default)
+        raise ValueError(f"invalid default answer: '{default}'")
 
     while True:
         sys.stdout.write(question + prompt)
@@ -121,12 +121,7 @@ def cli_detect(argv: Optional[List[str]] = None) -> int:
     parser.add_argument(
         "--version",
         action="version",
-        version="Charset-Normalizer {} - Python {} - Unicode {} - SpeedUp {}".format(
-            __version__,
-            python_version(),
-            unidata_version,
-            "OFF" if md_module.__file__.lower().endswith(".py") else "ON",
-        ),
+        version=f'Charset-Normalizer {__version__} - Python {python_version()} - Unicode {unidata_version} - SpeedUp {"OFF" if md_module.__file__.lower().endswith(".py") else "ON"}',
         help="Show version information and exit.",
     )
 
@@ -198,34 +193,31 @@ def cli_detect(argv: Optional[List[str]] = None) -> int:
             )
 
             if len(matches) > 1 and args.alternatives:
-                for el in matches:
-                    if el != best_guess:
-                        x_.append(
-                            CliDetectionResult(
-                                abspath(my_file.name),
-                                el.encoding,
-                                el.encoding_aliases,
-                                [
-                                    cp
-                                    for cp in el.could_be_from_charset
-                                    if cp != el.encoding
-                                ],
-                                el.language,
-                                el.alphabets,
-                                el.bom,
-                                el.percent_chaos,
-                                el.percent_coherence,
-                                None,
-                                False,
-                            )
-                        )
-
+                x_.extend(
+                    CliDetectionResult(
+                        abspath(my_file.name),
+                        el.encoding,
+                        el.encoding_aliases,
+                        [
+                            cp
+                            for cp in el.could_be_from_charset
+                            if cp != el.encoding
+                        ],
+                        el.language,
+                        el.alphabets,
+                        el.bom,
+                        el.percent_chaos,
+                        el.percent_coherence,
+                        None,
+                        False,
+                    )
+                    for el in matches
+                    if el != best_guess
+                )
             if args.normalize is True:
                 if best_guess.encoding.startswith("utf") is True:
                     print(
-                        '"{}" file does not need to be normalized, as it already came from unicode.'.format(
-                            my_file.name
-                        ),
+                        f'"{my_file.name}" file does not need to be normalized, as it already came from unicode.',
                         file=sys.stderr,
                     )
                     if my_file.closed is False:
@@ -244,9 +236,7 @@ def cli_detect(argv: Optional[List[str]] = None) -> int:
                 elif (
                     args.force is False
                     and query_yes_no(
-                        'Are you sure to normalize "{}" by replacing it ?'.format(
-                            my_file.name
-                        ),
+                        f'Are you sure to normalize "{my_file.name}" by replacing it ?',
                         "no",
                     )
                     is False
@@ -261,7 +251,7 @@ def cli_detect(argv: Optional[List[str]] = None) -> int:
                     with open(x_[0].unicode_path, "w", encoding="utf-8") as fp:
                         fp.write(str(best_guess))
                 except IOError as e:
-                    print(str(e), file=sys.stderr)
+                    print(e, file=sys.stderr)
                     if my_file.closed is False:
                         my_file.close()
                     return 2
