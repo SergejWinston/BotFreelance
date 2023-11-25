@@ -44,7 +44,7 @@ def detect(
     if r is not None and encoding == "utf_8" and r.bom:
         encoding += "_sig"
 
-    if should_rename_legacy is False and encoding in CHARDET_CORRESPONDENCE:
+    if not should_rename_legacy and encoding in CHARDET_CORRESPONDENCE:
         encoding = CHARDET_CORRESPONDENCE[encoding]
 
     return {

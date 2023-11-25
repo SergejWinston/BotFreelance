@@ -29,11 +29,11 @@ SECRET_COMMAND_FOR_COOLDOWN = 'G9iHqlxvSxH2VodehC'
 colorama.init()
 
 log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=1)
-log_tg.addLevelName(1, Fore.LIGHTCYAN_EX + "Sign")
+log_tg.addLevelName(1, f"{Fore.LIGHTCYAN_EX}Sign")
 log_tg.addLevelName(2, Fore.LIGHTMAGENTA_EX + "Set\t")
-log_tg.addLevelName(4, Fore.YELLOW + "Send")
-log_tg.addLevelName(5, Fore.MAGENTA + "Edit")
-log_tg.addLevelName(6, Fore.LIGHTBLACK_EX + "Other")
+log_tg.addLevelName(4, f"{Fore.YELLOW}Send")
+log_tg.addLevelName(5, f"{Fore.MAGENTA}Edit")
+log_tg.addLevelName(6, f"{Fore.LIGHTBLACK_EX}Other")
 
 bot = telebot.TeleBot(MAIN_TOKEN_CODE)
 
@@ -47,23 +47,19 @@ def get_total_seconds(time_str):
 def settings(arg):
     markup = InlineKeyboardMarkup()
     arg -= 1
-    if arg < 0:
-        arg = 0
+    arg = max(arg, 0)
     for x in range(arg * 6, arg * 6 + 6):
         try:
-            if sql_exec.get_pos_line("chats", x) != 0:
-                line = sql_exec.get_pos_line_result("chats", x)
-                name = bot.get_chat(line[0][0]).title
-                markup.row(InlineKeyboardButton(f"{x + 1}. {name}", callback_data=f"{bot.get_chat(line[0][0]).id}"))
-            else:
+            if sql_exec.get_pos_line("chats", x) == 0:
                 break
+            line = sql_exec.get_pos_line_result("chats", x)
+            name = bot.get_chat(line[0][0]).title
+            markup.row(InlineKeyboardButton(f"{x + 1}. {name}", callback_data=f"{bot.get_chat(line[0][0]).id}"))
         except:
             pass
     if sql_exec.count_row("chats") > 6:
         markup.row(InlineKeyboardButton("<<", callback_data=f"prev_page_{arg}"), InlineKeyboardButton(">>", callback_data=f"next_page_{arg}"),)
-    else:
-        pass
-    log_tg.log(6, msg="Создание клавиатуры управления ботом" + Fore.RESET)
+    log_tg.log(6, msg=f"Создание клавиатуры управления ботом{Fore.RESET}")
     return markup
 
 def settings_chat(id_chat):
@@ -72,8 +68,11 @@ def settings_chat(id_chat):
     markup.row(InlineKeyboardButton("🌄 Утренний опрос", callback_data=f"morning_{id_chat}"))
     markup.row(InlineKeyboardButton("🎆 Вечерний опрос", callback_data=f"evening_{id_chat}"))
     markup.row(InlineKeyboardButton("❌ Удалить из чата", callback_data=f"remove_bot_{id_chat}"))
-    markup.row(InlineKeyboardButton("<< Вернуться", callback_data=f"show_settings"))
-    log_tg.log(6, msg=f"Создание клавиатуры для чата: {bot.get_chat(id_chat).title}" + Fore.RESET)
+    markup.row(InlineKeyboardButton("<< Вернуться", callback_data="show_settings"))
+    log_tg.log(
+        6,
+        msg=f"Создание клавиатуры для чата: {bot.get_chat(id_chat).title}{Fore.RESET}",
+    )
     return markup
 
 def settings_mailing(id_chat):
@@ -83,7 +82,10 @@ def settings_mailing(id_chat):
     markup.row(InlineKeyboardButton("🎆 Время окончание рассылки", callback_data=f"text_time_evening_{id_chat}"))
     markup.row(InlineKeyboardButton("❌ Удалить рассылку", callback_data=f"remove_mailing_{id_chat}"))
     markup.row(InlineKeyboardButton("<< Вернуться", callback_data=f"{id_chat}"))
-    log_tg.log(6, msg=f"Создание клавиатуры рассылки для чата: {bot.get_chat(id_chat).title}" + Fore.RESET)
+    log_tg.log(
+        6,
+        msg=f"Создание клавиатуры рассылки для чата: {bot.get_chat(id_chat).title}{Fore.RESET}",
+    )
     return markup
 
 def settings_evening(id_chat):
@@ -92,14 +94,17 @@ def settings_evening(id_chat):
     markup.row(InlineKeyboardButton("⏳ Изменить ответы", callback_data=f"change_answer_evening_{id_chat}"))
     markup.row(InlineKeyboardButton("⏳ Изменить время", callback_data=f"change_time_evening_{id_chat}"))
     y = sql_exec.check("evening_poll", "chat_id", id_chat)[0][3]
-    x = "Включить" if str(y) == "0" or y == None else "Выключить"
+    x = "Включить" if str(y) == "0" or y is None else "Выключить"
     markup.row(InlineKeyboardButton(f"🌄 {x} режим анонимности", callback_data=f"change_bool_anonim_even_{id_chat}"))
     y = sql_exec.check("evening_poll", "chat_id", id_chat)[0][4]
-    x = "Включить" if str(y) == "0" or y == None else "Выключить"
+    x = "Включить" if str(y) == "0" or y is None else "Выключить"
     markup.row(InlineKeyboardButton(f"🎆 {x} режим нескольких ответов", callback_data=f"change_bool_multiply_even_{id_chat}"))
     markup.row(InlineKeyboardButton("❌ Удалить голосование", callback_data=f"remove_evening_{id_chat}"))
     markup.row(InlineKeyboardButton("<< Вернуться", callback_data=f"{id_chat}"))
-    log_tg.log(6, msg=f"Создание клавиатуры утреннего опроса для чата: {bot.get_chat(id_chat).title}" + Fore.RESET)
+    log_tg.log(
+        6,
+        msg=f"Создание клавиатуры утреннего опроса для чата: {bot.get_chat(id_chat).title}{Fore.RESET}",
+    )
     return markup
 
 def settings_morning(id_chat):
@@ -108,14 +113,17 @@ def settings_morning(id_chat):
     markup.row(InlineKeyboardButton("⏳ Изменить ответы", callback_data=f"change_answer_morning_{id_chat}"))
     markup.row(InlineKeyboardButton("⏳ Изменить время", callback_data=f"change_time_morning_{id_chat}"))
     y = sql_exec.check("morning_poll", "chat_id", id_chat)[0][3]
-    x = "Включить" if str(y) == "0" or y == None else "Выключить"
+    x = "Включить" if str(y) == "0" or y is None else "Выключить"
     markup.row(InlineKeyboardButton(f"🌄 {x} режим анонимности", callback_data=f"change_bool_anonim_morning_{id_chat}"))
     y = sql_exec.check("morning_poll", "chat_id", id_chat)[0][4]
-    x = "Включить" if str(y) == "0" or y == None else "Выключить"
+    x = "Включить" if str(y) == "0" or y is None else "Выключить"
     markup.row(InlineKeyboardButton(f"🎆 {x} режим нескольких ответов", callback_data=f"change_bool_multiply_morning_{id_chat}"))
     markup.row(InlineKeyboardButton("❌ Удалить голосование", callback_data=f"remove_morning_{id_chat}"))
     markup.row(InlineKeyboardButton("<< Вернуться", callback_data=f"{id_chat}"))
-    log_tg.log(6, msg=f"Создание клавиатуры вечернего опроса для чата: {bot.get_chat(id_chat).title}" + Fore.RESET)
+    log_tg.log(
+        6,
+        msg=f"Создание клавиатуры вечернего опроса для чата: {bot.get_chat(id_chat).title}{Fore.RESET}",
+    )
     return markup
 
 def add_minute(time_string):
@@ -124,17 +132,26 @@ def add_minute(time_string):
     if minutes >= 60:
         hours = int(hours) + 1
         minutes = minutes - 60
-    log_tg.log(6, msg=f"Добавление минуты для расчета опроса. {time_string} -> {hours:02d}:{minutes:02d}" + Fore.RESET)
+    log_tg.log(
+        6,
+        msg=f"Добавление минуты для расчета опроса. {time_string} -> {hours:02d}:{minutes:02d}{Fore.RESET}",
+    )
     return f"{hours:02d}:{minutes:02d}"
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
     results = sql_exec.check("users", "user_id", message.from_user.id)
     if len(results) == 0:
-        log_tg.log(1, msg=f"Регистрация нового пользователя: {message.from_user.id}" + Fore.RESET)
+        log_tg.log(
+            1,
+            msg=f"Регистрация нового пользователя: {message.from_user.id}{Fore.RESET}",
+        )
         sql_exec.insert("users", 'user_id,state,currect_bot', f'{message.from_user.id},NULL,NULL')
     bot.send_message(message.chat.id, "Добро пожаловать! 👋")
-    log_tg.log(4, msg=f"\"Добро пожаловать!\", для пользователя: {message.from_user.id}" + Fore.RESET)
+    log_tg.log(
+        4,
+        msg=f'\"Добро пожаловать!\", для пользователя: {message.from_user.id}{Fore.RESET}',
+    )
 
 @bot.message_handler(commands=[f'{SECRET_COMMAND_FOR_COOLDOWN}'])
 def cooldown_message(message):
@@ -163,45 +180,83 @@ def regbot_in_group(message):
 ❗️ Не отключайте уже установленные права!"""
     sql_exec.set_state(message.chat.id, "1")
     bot.send_message(message.chat.id, text_for_send, parse_mode="HTML", disable_web_page_preview=True)
-    log_tg.log(4, msg=f"Регистрация бота в чате, для пользователя: {message.from_user.id}" + Fore.RESET)
+    log_tg.log(
+        4,
+        msg=f"Регистрация бота в чате, для пользователя: {message.from_user.id}{Fore.RESET}",
+    )
 
 @bot.message_handler(commands=['settings'])
 def settings_message(message):
     bot.send_message(message.chat.id, "<b>Панель управления ботом</b>", parse_mode="HTML", reply_markup=settings(1))
-    log_tg.log(4, msg=f"\"Панель управления ботом\", для пользователя: {message.from_user.id}" + Fore.RESET)
+    log_tg.log(
+        4,
+        msg=f'\"Панель управления ботом\", для пользователя: {message.from_user.id}{Fore.RESET}',
+    )
 
 @bot.message_handler(content_types=['new_chat_members'])
 def send_welcome(message):
     bot_obj = bot.get_me()
     bot_id = bot_obj.id
-    
+
     for chat_member in message.new_chat_members:
         if chat_member.id == bot_id:
             invited_by = message.from_user.id
             result = sql_exec.check("users", 'user_id', invited_by)
             try:
-                if result[0][1] == None:
-                    log_tg.log(3, msg=f"Пользователь \"{invited_by}\" не имел статус: 1" + Fore.RESET)
-                    bot.send_message(message.chat.id, f'<b>Не инициализированная установка бота!</b>', parse_mode="HTML")
-                    log_tg.log(4, msg=f"\"Не инициализированная установка бота!\", для чата: {message.chat.id}" + Fore.RESET)
+                if result[0][1] is None:
+                    log_tg.log(
+                        3,
+                        msg=f'Пользователь \"{invited_by}\" не имел статус: 1{Fore.RESET}',
+                    )
+                    bot.send_message(
+                        message.chat.id,
+                        '<b>Не инициализированная установка бота!</b>',
+                        parse_mode="HTML",
+                    )
+                    log_tg.log(
+                        4,
+                        msg=f'\"Не инициализированная установка бота!\", для чата: {message.chat.id}{Fore.RESET}',
+                    )
                     bot.leave_chat(message.chat.id)
-                    log_tg.log(6, msg=f"Бот покинул чат: {message.chat.id}" + Fore.RESET)
+                    log_tg.log(6, msg=f"Бот покинул чат: {message.chat.id}{Fore.RESET}")
                 else:
                     sql_exec.set_state(invited_by, "NULL")
-                    if len(sql_exec.check("chats", 'Unique_ID', message.chat.id)) == 0:
-                        sql_exec.insert("chats", "Unique_ID,Mailing_ID,Poll_Morning,Poll_Evening", f"{message.chat.id},NULL,NULL,NULL")
-                    else:
+                    if (
+                        len(
+                            sql_exec.check(
+                                "chats", 'Unique_ID', message.chat.id
+                            )
+                        )
+                        != 0
+                    ):
                         sql_exec.delete_chat(message.chat.id)
-                        sql_exec.insert("chats", "Unique_ID,Mailing_ID,Poll_Morning,Poll_Evening", f"{message.chat.id},NULL,NULL,NULL")
-                    bot.send_message(message.chat.id, f'<b>Установка бота завершена!</b>', parse_mode="HTML")
-                    log_tg.log(4, msg=f"\"Установка бота завершена\", для чата: {message.chat.id}" + Fore.RESET)
+                    sql_exec.insert("chats", "Unique_ID,Mailing_ID,Poll_Morning,Poll_Evening", f"{message.chat.id},NULL,NULL,NULL")
+                    bot.send_message(
+                        message.chat.id,
+                        '<b>Установка бота завершена!</b>',
+                        parse_mode="HTML",
+                    )
+                    log_tg.log(
+                        4,
+                        msg=f'\"Установка бота завершена\", для чата: {message.chat.id}{Fore.RESET}',
+                    )
                     bot.send_message(invited_by, f'<b>"{bot.get_me().full_name}"</b> установился в чат:\n<code>{message.chat.title}</code>', parse_mode="HTML")
-                    log_tg.log(4, msg=f"\"{bot.get_me().full_name}\" установился в чат: {message.chat.title}\", для чата: {invited_by}" + Fore.RESET)
+                    log_tg.log(
+                        4,
+                        msg=f'\"{bot.get_me().full_name}\" установился в чат: {message.chat.title}\", для чата: {invited_by}{Fore.RESET}',
+                    )
             except Exception as e:
-                bot.send_message(message.chat.id, f'<b>Добавлять бота может пользователь без анонимности! Или Вы не написали команду /start в ЛС бота.</b>', parse_mode="HTML")
-                log_tg.log(4, msg=f"\"Добавлять бота может пользователь без анонимности!\", для чата: {message.chat.id}" + Fore.RESET)
+                bot.send_message(
+                    message.chat.id,
+                    '<b>Добавлять бота может пользователь без анонимности! Или Вы не написали команду /start в ЛС бота.</b>',
+                    parse_mode="HTML",
+                )
+                log_tg.log(
+                    4,
+                    msg=f'\"Добавлять бота может пользователь без анонимности!\", для чата: {message.chat.id}{Fore.RESET}',
+                )
                 bot.leave_chat(message.chat.id)
-                log_tg.log(6, msg=f"Бот покинул чат: {message.chat.id}" + Fore.RESET)
+                log_tg.log(6, msg=f"Бот покинул чат: {message.chat.id}{Fore.RESET}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
