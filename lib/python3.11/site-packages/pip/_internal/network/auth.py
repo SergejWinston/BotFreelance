@@ -73,14 +73,10 @@ class KeyRingPythonProvider(KeyRingBaseProvider):
         if hasattr(self.keyring, "get_credential"):
             logger.debug("Getting credentials from keyring for %s", url)
             cred = self.keyring.get_credential(url, username)
-            if cred is not None:
-                return cred.username, cred.password
-            return None
-
+            return (cred.username, cred.password) if cred is not None else None
         if username is not None:
             logger.debug("Getting password from keyring for %s", url)
-            password = self.keyring.get_password(url, username)
-            if password:
+            if password := self.keyring.get_password(url, username):
                 return username, password
         return None
 
@@ -126,9 +122,7 @@ class KeyRingCliProvider(KeyRingBaseProvider):
             capture_output=True,
             env=env,
         )
-        if res.returncode:
-            return None
-        return res.stdout.decode("utf-8").strip(os.linesep)
+        return None if res.returncode else res.stdout.decode("utf-8").strip(os.linesep)
 
     def _set_password(self, service_name: str, username: str, password: str) -> None:
         """Mirror the implementation of keyring.set_password using cli"""
@@ -161,9 +155,7 @@ def get_keyring_provider() -> KeyRingBaseProvider:
                 str(exc),
             )
 
-        # Fallback to Cli Provider if `keyring` isn't installed
-        cli = shutil.which("keyring")
-        if cli:
+        if cli := shutil.which("keyring"):
             return KeyRingCliProvider(cli)
 
     return KeyRingNullProvider()
@@ -245,9 +237,7 @@ class MultiDomainBasicAuth(AuthBase):
         # Find a matching index url for this request
         index_url = self._get_index_url(url)
         if index_url:
-            # Split the credentials from the url.
-            index_info = split_auth_netloc_from_url(index_url)
-            if index_info:
+            if index_info := split_auth_netloc_from_url(index_url):
                 index_url, _, index_url_user_password = index_info
                 logger.debug("Found index url %s", index_url)
 
@@ -260,21 +250,16 @@ class MultiDomainBasicAuth(AuthBase):
 
         # Get creds from netrc if we still don't have them
         if allow_netrc:
-            netrc_auth = get_netrc_auth(original_url)
-            if netrc_auth:
+            if netrc_auth := get_netrc_auth(original_url):
                 logger.debug("Found credentials in netrc for %s", netloc)
                 return netrc_auth
 
         # If we don't have a password and keyring is available, use it.
         if allow_keyring:
-            # The index url is more specific than the netloc, so try it first
-            # fmt: off
-            kr_auth = (
-                get_keyring_auth(index_url, username) or
-                get_keyring_auth(netloc, username)
-            )
-            # fmt: on
-            if kr_auth:
+            if kr_auth := (
+                get_keyring_auth(index_url, username)
+                or get_keyring_auth(netloc, username)
+            ):
                 logger.debug("Found credentials in keyring for %s", netloc)
                 return kr_auth
 
