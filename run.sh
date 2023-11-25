@@ -1,5 +1,3 @@
-git clone https://github.com/SergejWinston/BotFreelance
-cd BotFreelance
 cd bin
 source activate
 cd ..
