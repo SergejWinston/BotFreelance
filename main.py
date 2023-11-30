@@ -11,7 +11,6 @@ import configparser
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import colorama
 from colorama import Fore
-import configparser
 import os
 
 
@@ -152,10 +151,11 @@ def cooldown_message(message):
 
 @bot.message_handler(commands=['regbot'])
 def regbot_in_group(message):
+    suffix = bot.get_me().username[:-4]
     text_for_send = f"""<b>Установка "{bot.get_me().full_name}" в чат</b>
 
 0) Используйте мобильное приложение
-1) Пригласите бота <a href="http://t.me/snerov_bot?startgroup=snerov">по этой ссылке</a>
+1) Пригласите бота <a href="http://t.me/{bot.get_me().username}?startgroup={suffix}">по этой ссылке</a>
 2) Нажмите на название СВОЕГО чата
 3) Используйте бота!
 
@@ -193,7 +193,7 @@ def send_welcome(message):
                     else:
                         sql_exec.delete_chat(message.chat.id)
                         sql_exec.insert("chats", "Unique_ID,Mailing_ID,Poll_Morning,Poll_Evening", f"{message.chat.id},NULL,NULL,NULL")
-                    bot.send_message(message.chat.id, f'<b>Установка бота завершена!</b>', parse_mode="HTML")
+                    bot.send_message(message.chat.id, '<b>Установка бота завершена!</b>', parse_mode="HTML")
                     log_tg.log(4, msg=f"\"Установка бота завершена\", для чата: {message.chat.id}" + Fore.RESET)
                     bot.send_message(invited_by, f'<b>"{bot.get_me().full_name}"</b> установился в чат:\n<code>{message.chat.title}</code>', parse_mode="HTML")
                     log_tg.log(4, msg=f"\"{bot.get_me().full_name}\" установился в чат: {message.chat.title}\", для чата: {invited_by}" + Fore.RESET)
