@@ -11,6 +11,7 @@ import configparser
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import colorama
 from colorama import Fore
+import configparser
 import os
 
 
@@ -27,7 +28,7 @@ SECRET_COMMAND_FOR_COOLDOWN = 'G9iHqlxvSxH2VodehC'
 
 colorama.init()
 
-log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=1000)
+log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=11111)
 log_tg.addLevelName(1, Fore.LIGHTCYAN_EX + "Sign")
 log_tg.addLevelName(2, Fore.LIGHTMAGENTA_EX + "Set\t")
 log_tg.addLevelName(4, Fore.YELLOW + "Send")
@@ -35,6 +36,10 @@ log_tg.addLevelName(5, Fore.MAGENTA + "Edit")
 log_tg.addLevelName(6, Fore.LIGHTBLACK_EX + "Other")
 
 bot = telebot.TeleBot(MAIN_TOKEN_CODE)
+
+def removeprefix(s, prefix):
+  if s.startswith(prefix): return s[len(prefix) :]
+  else: return s
 
 def get_total_seconds(time_str):
     time_match = re.match(r"^(\d{2}):(\d{2}):(\d{2})$", time_str)
@@ -118,7 +123,7 @@ def settings_morning(id_chat):
     return markup
 
 def add_minute(time_string):
-    hours, minutes = map(int, time_string.split(":"))
+    hours, minutes = map(int, time_string.split(":")) # type: ignore
     minutes = int(minutes) + 1
     if minutes >= 60:
         hours = int(hours) + 1
@@ -137,25 +142,24 @@ def start_message(message):
 
 @bot.message_handler(commands=[f'{SECRET_COMMAND_FOR_COOLDOWN}'])
 def cooldown_message(message):
-    x = get_total_seconds(str(message.text).removeprefix(f"/{SECRET_COMMAND_FOR_COOLDOWN} "))
-    
+    x = get_total_seconds(removeprefix(str(message.text), f"/{SECRET_COMMAND_FOR_COOLDOWN} "))
+    z = removeprefix(str(message.text), f'/{SECRET_COMMAND_FOR_COOLDOWN}')
     if x != False:
         config = configparser.ConfigParser()
         config['config'] = {'cooldown': x} # type: ignore
         with open('config.ini', 'w') as f: 
             config.write(f)
         f.close()
-        bot.send_message(message.chat.id, f"✅ <b>Вы успешно установили КД между рассылкой.</b>\n\n<code>{str(message.text).removeprefix(f'/{SECRET_COMMAND_FOR_COOLDOWN} ')}</code> (ЧЧ:ММ:СС)", "HTML")
+        bot.send_message(message.chat.id, f"✅ <b>Вы успешно установили КД между рассылкой.</b>\n\n<code>{z}</code> (ЧЧ:ММ:СС)", "HTML")
     else:
         bot.send_message(message.chat.id, f"❌ <b>Вы неверно ввели данную команду.</b>\nФормат ввода данных: <code>ЧЧ:ММ:СС</code>\n\nИспользуйте: \n<code>/{SECRET_COMMAND_FOR_COOLDOWN} 01:02:03</code>", "HTML")
 
 @bot.message_handler(commands=['regbot'])
 def regbot_in_group(message):
-    suffix = bot.get_me().username[:-4]
     text_for_send = f"""<b>Установка "{bot.get_me().full_name}" в чат</b>
 
 0) Используйте мобильное приложение
-1) Пригласите бота <a href="http://t.me/{bot.get_me().username}?startgroup={suffix}">по этой ссылке</a>
+1) Пригласите бота <a href="http://t.me/AssistantHLBR_bot?startgroup=AssistantHLBR">по этой ссылке</a>
 2) Нажмите на название СВОЕГО чата
 3) Используйте бота!
 
@@ -193,7 +197,7 @@ def send_welcome(message):
                     else:
                         sql_exec.delete_chat(message.chat.id)
                         sql_exec.insert("chats", "Unique_ID,Mailing_ID,Poll_Morning,Poll_Evening", f"{message.chat.id},NULL,NULL,NULL")
-                    bot.send_message(message.chat.id, '<b>Установка бота завершена!</b>', parse_mode="HTML")
+                    bot.send_message(message.chat.id, f'<b>Установка бота завершена!</b>', parse_mode="HTML")
                     log_tg.log(4, msg=f"\"Установка бота завершена\", для чата: {message.chat.id}" + Fore.RESET)
                     bot.send_message(invited_by, f'<b>"{bot.get_me().full_name}"</b> установился в чат:\n<code>{message.chat.title}</code>', parse_mode="HTML")
                     log_tg.log(4, msg=f"\"{bot.get_me().full_name}\" установился в чат: {message.chat.title}\", для чата: {invited_by}" + Fore.RESET)
@@ -209,7 +213,7 @@ def callback_query(call):
     count_page_chats = count_chats // 7
 
     if 'change_answer_morning' in call.data:
-        id_chat = int(str(call.data).removeprefix("change_answer_morning_"))
+        id_chat = int(removeprefix(str(call.data), "change_answer_morning_"))
         try: sql_exec.check("morning_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -249,8 +253,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_answer_poll, id_chat, call, False) # type: ignore
         return
     elif "change_answer_evening_" in call.data:
-        id_chat = int(str(call.data).removeprefix("change_answer_evening_"))
-        
+        id_chat = int(removeprefix(str(call.data), "change_answer_evening_"))
         try: sql_exec.check("evening_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -290,7 +293,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_answer_poll, id_chat, call, True) # type: ignore
         return
     if 'change_bool_multiply_morning_' in call.data:
-        id_chat = int(str(call.data).removeprefix("change_bool_multiply_morning_"))
+        id_chat = int(removeprefix(str(call.data), "change_bool_multiply_morning_"))
         try: sql_exec.check("morning_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -327,7 +330,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, parse_mode="HTML", reply_markup=settings_morning(id_chat))  
         return
     elif "change_bool_multiply_even_" in call.data:
-        id_chat = int(str(call.data).removeprefix("change_bool_multiply_even_"))
+        id_chat = int(removeprefix(str(call.data), "change_bool_multiply_even_"))
         try: sql_exec.check("evening_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -428,7 +431,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=SENDER_TEXT_MAIN_CHAT, parse_mode="HTML", reply_markup=settings_chat(call.data)) 
         return
     elif 'change_bool_anonim_morning_' in call.data:
-        id_chat = int(str(call.data).removeprefix("change_bool_anonim_morning_"))
+        id_chat = int(removeprefix(str(call.data), "change_bool_anonim_morning_"))
         try: sql_exec.check("morning_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -465,7 +468,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, parse_mode="HTML", reply_markup=settings_morning(id_chat))  
         return
     elif 'change_bool_anonim_even_' in call.data:
-        id_chat = int(str(call.data).removeprefix("change_bool_anonim_even_"))
+        id_chat = int(removeprefix(str(call.data), "change_bool_anonim_even_"))
         try: sql_exec.check("evening_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -502,7 +505,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, parse_mode="HTML", reply_markup=settings_evening(id_chat))  
         return
     elif "remove_mailing_" in call.data:
-        id_chat = str(call.data).removeprefix("remove_mailing_")
+        id_chat = int(removeprefix(str(call.data), "remove_mailing_"))
         try: sql_exec.check("mailing", "chat_id", id_chat)[0][1]
         except Exception as e:
             print(e)
@@ -575,7 +578,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=SENDER_TEXT_MAIN_CHAT, parse_mode="HTML", reply_markup=settings_chat(id_chat))
         return
     elif "remove_morning_" in call.data:
-        id_chat = str(call.data).removeprefix("remove_morning_")
+        id_chat = int(removeprefix(str(call.data), "remove_morning_"))
         try: sql_exec.check("mailing", "chat_id", id_chat)[0][1]
         except Exception as e:
             print(e)
@@ -645,7 +648,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=SENDER_TEXT_MAIN_CHAT, parse_mode="HTML", reply_markup=settings_chat(id_chat))
         return
     elif "remove_evening_" in call.data:
-        id_chat = str(call.data).removeprefix("remove_evening_")
+        id_chat = int(removeprefix(str(call.data), "remove_evening_"))
         try: sql_exec.check("mailing", "chat_id", id_chat)[0][1]
         except Exception as e:
             print(e)
@@ -715,7 +718,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=SENDER_TEXT_MAIN_CHAT, parse_mode="HTML", reply_markup=settings_chat(id_chat))
         return
     elif "remove_bot_" in call.data:
-        id_chat = str(call.data).removeprefix("remove_bot_")
+        id_chat = str(removeprefix(str(call.data), "remove_bot_"))
         bot.answer_callback_query(call.id, "Бот покинул чат!", True)
         bot.leave_chat(id_chat)
         sql_exec.remove_line("mailing", "chat_id", id_chat)
@@ -725,7 +728,8 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="<b>Панель управления ботом</b>", parse_mode="HTML", reply_markup=settings(1))
         return
     elif "text_change_morning_" in call.data:
-        id_chat = int(str(call.data).removeprefix("text_change_morning_"))
+        id_chat = int(removeprefix(str(call.data), "text_change_morning_"))
+
         try: sql_exec.check("morning_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -761,7 +765,8 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_text_poll, id_chat, call, False) # type: ignore
         return
     elif "text_change_evening_" in call.data:
-        id_chat = int(str(call.data).removeprefix("text_change_evening_"))
+        id_chat = int(removeprefix(str(call.data), "text_change_evening_"))
+
         try: sql_exec.check("evening_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -797,7 +802,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_text_poll, id_chat, call, True) # type: ignore
         return
     elif "change_time_morning_" in call.data:
-        id_chat = int(str(call.data).removeprefix("change_time_morning_"))
+        id_chat = int(removeprefix(str(call.data), "change_time_morning_"))
         try: sql_exec.check("morning_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -833,8 +838,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_time_poll, id_chat, call, False) # type: ignore
         return
     elif "change_time_evening_" in call.data:
-        id_chat = int(str(call.data).removeprefix("change_time_evening_"))
-        
+        id_chat = int(removeprefix(str(call.data), "change_time_evening_"))
         try: sql_exec.check("evening_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -870,7 +874,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_time_poll, id_chat, call, True) # type: ignore
         return
     elif "text_change_" in call.data:
-        id_chat = int(str(call.data).removeprefix("text_change_"))
+        id_chat = int(removeprefix(str(call.data), "text_change_"))
         text = f"""⚙️ <b>{bot.get_chat(id_chat).title}</b>
 
 📩 <i>Рассылка ({sql_exec.check("mailing", "chat_id", id_chat)[0][1] if sql_exec.check("mailing", "chat_id", id_chat)[0][1] != None else "__:__"} - {sql_exec.check("mailing", "chat_id", id_chat)[0][2] if sql_exec.check("mailing", "chat_id", id_chat)[0][2] != None else "__:__"})</i>:
@@ -882,7 +886,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_text, id_chat, call) # type: ignore
         return
     elif "text_time_morning_" in call.data:
-        id_chat = int(str(call.data).removeprefix("text_time_morning_"))
+        id_chat = int(removeprefix(str(call.data), "text_time_morning_"))
         text = f"""⚙️ <b>{bot.get_chat(id_chat).title}</b>
 
 📩 <i>Рассылка ({sql_exec.check("mailing", "chat_id", id_chat)[0][1] if sql_exec.check("mailing", "chat_id", id_chat)[0][1] != None else "__:__"} - {sql_exec.check("mailing", "chat_id", id_chat)[0][2] if sql_exec.check("mailing", "chat_id", id_chat)[0][2] != None else "__:__"})</i>:
@@ -894,7 +898,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_time, id_chat, call, False) # type: ignore
         return
     elif "text_time_evening_" in call.data:
-        id_chat = int(str(call.data).removeprefix("text_time_evening_"))
+        id_chat = int(removeprefix(str(call.data), "text_time_evening_"))
         text = f"""⚙️ <b>{bot.get_chat(id_chat).title}</b>
 
 📩 <i>Рассылка ({sql_exec.check("mailing", "chat_id", id_chat)[0][1] if sql_exec.check("mailing", "chat_id", id_chat)[0][1] != None else "__:__"} - {sql_exec.check("mailing", "chat_id", id_chat)[0][2] if sql_exec.check("mailing", "chat_id", id_chat)[0][2] != None else "__:__"})</i>:
@@ -906,7 +910,7 @@ def callback_query(call):
         bot.register_next_step_handler(x, change_time, id_chat, call, True) # type: ignore
         return
     elif "morning_" in call.data:
-        id_chat = int(str(call.data).removeprefix("morning_"))
+        id_chat = int(removeprefix(str(call.data), "morning_"))
         try: sql_exec.check("morning_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -941,7 +945,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, parse_mode="HTML", reply_markup=settings_morning(id_chat))  
         return
     elif "evening_" in call.data:
-        id_chat = int(str(call.data).removeprefix("evening_"))
+        id_chat = int(removeprefix(str(call.data), "evening_"))
         try: sql_exec.check("evening_poll", "chat_id", id_chat)[0]
         except Exception as e:
             print(e)
@@ -976,7 +980,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, parse_mode="HTML", reply_markup=settings_evening(id_chat))
         return
     elif "mailing_" in call.data:
-        id_chat = int(str(call.data).removeprefix("mailing_"))
+        id_chat = int(removeprefix(str(call.data), "mailing_"))
         try: sql_exec.check("mailing", "chat_id", id_chat)[0][1]
         except Exception as e:
             print(e)
@@ -1068,12 +1072,12 @@ def callback_query(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=SENDER_TEXT_MAIN_CHAT, parse_mode="HTML", reply_markup=settings_chat(call.data))
         return
     elif "next_page_" in call.data:
-        page = int(str(call.data).removeprefix("next_page_"))
+        page = int(removeprefix(str(call.data), "next_page_"))
         if page == count_page_chats or (count_page_chats == 1 and count_chats % 7 == 0): bot.answer_callback_query(call.id, text="Дальше листать некуда... Больше чатов у нас нет :(", show_alert=True)
         else: bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="<b>Панель управления ботом</b>", parse_mode="HTML", reply_markup=settings(page + 2))
         return
     elif "prev_page_" in call.data:
-        page = int(str(call.data).removeprefix("prev_page_"))
+        page = int(removeprefix(str(call.data), "prev_page_"))
         if page == 0: bot.answer_callback_query(call.id, text="Дальше листать некуда... Отрицательных страниц не существует :(", show_alert=True)
         else: bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="<b>Панель управления ботом</b>", parse_mode="HTML", reply_markup=settings(page))
         return
@@ -1444,7 +1448,7 @@ async def send_poll():
                             await send_poll_chat(chat_id, question, anonim, multiply, options)
             except Exception as e:
                 print(e)
-        await asyncio.sleep(55)
+        await asyncio.sleep(57)
 
 async def send_poll_chat(chat_id, question, anonim, multiply, options):
     x = [html.unescape(option) for option in eval(options)]
