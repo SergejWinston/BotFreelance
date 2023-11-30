@@ -7,7 +7,7 @@ NAME_BASE = "database.db"
 
 colorama.init()
 
-log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=1)
+log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=1000)
 log_tg.addLevelName(3, Fore.BLUE + "SQL\t")
 
 def return_table(table: str) -> list: 

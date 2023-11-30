@@ -23,12 +23,12 @@ if not os.path.exists("config.ini"):
         config.write(f)
     f.close()
 
-MAIN_TOKEN_CODE = "6386292938:AAEw_Q7NQo7kthATeqmS8VRmCZr0bzjPDcI"
+MAIN_TOKEN_CODE = "6949008060:AAHvVW32An43-YA9VEPZfS4S_xTr_VbVgy0"
 SECRET_COMMAND_FOR_COOLDOWN = 'G9iHqlxvSxH2VodehC'
 
 colorama.init()
 
-log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=1)
+log_tg.basicConfig(format="[%(asctime)s] %(levelname)s \t | \t%(message)s", datefmt='%H:%M:%S', level=1000)
 log_tg.addLevelName(1, Fore.LIGHTCYAN_EX + "Sign")
 log_tg.addLevelName(2, Fore.LIGHTMAGENTA_EX + "Set\t")
 log_tg.addLevelName(4, Fore.YELLOW + "Send")
